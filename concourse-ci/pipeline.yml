@@ -1,0 +1,71 @@
+resource_types:
+- name: overops-resource
+  type: docker-image
+  source:
+    repository: overops/concourse-resource
+    tag: yaml
+
+resources:
+- name: hello-world
+  type: git
+  source:
+    uri: https://github.com/dfieldfl/hello-world.git
+    branch: master
+- name: overops-reliability-report
+  type: overops-resource
+  source:
+    active_timespan: 6d
+    baseline_timespan: 14d
+    print_top_issues: 5
+    debug: false
+    mark_unstable: true
+    new_events: true
+    application_name: hello-world
+    overops_api_key: ((apiToken))
+    overops_sid: S2
+    overops_url: ((urlApi))
+    resurfaced_errors: true
+    critical_exception_types: NullPointerException,IndexOutOfBoundsException,InvalidCastException,AssertionError
+
+jobs:
+- name: maven-package
+  plan:
+  - get: hello-world
+    trigger: true
+  - task: get-deployment-name
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: dfieldfl/overops-maven-agent
+      inputs:
+        - name: hello-world
+      run:
+        path: sh
+        args:
+          - -exc
+          - echo "blah" > ./deployment-name/name
+      outputs:
+        - name: deployment-name
+  - task: test
+    privileged: true
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: dfieldfl/overops-maven-agent
+      inputs:
+        - name: hello-world
+      run:
+        path: mvn
+        args: ["-f", "hello-world/pom.xml", "clean", "package"]
+  - put: overops-reliability-report
+    inputs:
+      - deployment-name
+    params:
+      application_name: hello-world
+      deployment_file: ./deployment-name/name
+      debug: true
+      mark_unstable: true
