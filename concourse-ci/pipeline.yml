@@ -45,7 +45,7 @@ jobs:
         path: sh
         args:
           - -exc
-          - echo "blah" > ./deployment-name/name
+          - echo "$(mvn -f hello-world/pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)" > ./deployment-name/name
       outputs:
         - name: deployment-name
   - task: test
@@ -61,11 +61,13 @@ jobs:
       run:
         path: mvn
         args: ["-f", "hello-world/pom.xml", "clean", "package"]
+    params:
+      TAKIPI_SERVER_NAME: Concourse-Agent
+      TAKIPI_COLLECTOR_HOST: ((collectorHost))
   - put: overops-reliability-report
     inputs:
       - deployment-name
     params:
       application_name: hello-world
       deployment_file: ./deployment-name/name
-      debug: true
       mark_unstable: true
