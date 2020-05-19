@@ -29,10 +29,7 @@ public class AppTest
       try {
         System.out.format("test iteration %d\n", i);
         Thread.sleep(10000);
-        if (true) {
-          //empty
-        }
-        throw new ClassCastException();
+        throw new ClassCastException("resurface");
       } catch ( Exception e ) {
         // swallowed
       }
