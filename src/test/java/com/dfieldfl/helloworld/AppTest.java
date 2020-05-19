@@ -29,6 +29,9 @@ public class AppTest
       try {
         System.out.format("test iteration %d\n", i);
         Thread.sleep(10000);
+        if (true) {
+          //empty
+        }
         throw new ClassCastException();
       } catch ( Exception e ) {
         // swallowed
